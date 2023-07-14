@@ -1,6 +1,5 @@
 ﻿using BussinessUnitFileProcAPI.Entities;
 using BussinessUnitFileProcAPI.Services;
-using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace BussinessUnitFileProcAPI.Repositories;
@@ -17,25 +16,6 @@ public class TableStorageRepo : ITableStorageService
         _logger = logger;
         _cloudTable = cloudTable;
     }
-
-    //public virtual async Task<CloudTable> GetTableClient()
-    //{
-
-    //    var storageAccount = CloudStorageAccount.Parse(_configuration["StorageConnectionString"]);
-    //    var tableClient = storageAccount.CreateCloudTableClient();
-    //    var bussineUnitTable = tableClient.GetTableReference(TableName);
-
-    //    try
-    //    {
-    //        await bussineUnitTable.CreateIfNotExistsAsync();
-    //        _logger.LogInformation("Table created if not exist successfully");
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogError(ex, $"Error occured inside{nameof(TableStorageRepo)} in a Method {nameof(GetTableClient)}");
-    //    }
-    //    return bussineUnitTable;
-    //}
     public async Task<List<BussinessUnitEntity>> GetEntityAsync(string BatchId)
     {
         //var table = await GetTableClient();
