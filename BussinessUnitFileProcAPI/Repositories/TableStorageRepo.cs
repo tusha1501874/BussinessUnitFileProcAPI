@@ -18,7 +18,6 @@ public class TableStorageRepo : ITableStorageService
     }
     public async Task<List<BussinessUnitEntity>> GetEntityAsync(string BatchId)
     {
-        //var table = await GetTableClient();
         string condition = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, BatchId);
         var query = new TableQuery<BussinessUnitEntity>().Where(condition);
         var result = default(TableQuerySegment<BussinessUnitEntity>);
@@ -32,9 +31,8 @@ public class TableStorageRepo : ITableStorageService
         {
             _logger.LogError(ex, $"Error occured inside{nameof(TableStorageRepo)} in a Method {nameof(GetEntityAsync)}");
         }
-
+        
         return result.Results;
-
     }
 
     public async Task<string> InsertEntityAsync(BussinessUnitEntity entity)
