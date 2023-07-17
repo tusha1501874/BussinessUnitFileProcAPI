@@ -5,7 +5,6 @@ using BussinessUnitFileProcAPI.Validators;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BussinessUnitFileProcAPI.Controllers;
-
     [ApiController]
     [Route("[controller]")]
     public class BussinessUnitController : ControllerBase
@@ -20,12 +19,13 @@ namespace BussinessUnitFileProcAPI.Controllers;
         [ActionName(nameof(GetAsync))]
         public async Task<IActionResult> GetAsync([FromQuery] string id)
         {
-            var result = await _storageService.GetEntityAsync(id);
-            if (result.Count > 0)
+            List<BussinessUnitEntity>? result = await _storageService.GetEntityAsync(id);
+            
+            if (result!=null && result.Count>0)
                 return Ok(result);
             else
             {
-                var errorMsg = new Error("RecordNotFound", "Record Not found For BatchId");
+                Error errorMsg = new Error("RecordNotFound", "Record Not found For BatchId");
                 return NotFound(errorMsg);
             }
         }
@@ -39,17 +39,17 @@ namespace BussinessUnitFileProcAPI.Controllers;
             entity.BatchID = Id;
             entity.RowKey = Id;
 
-            var validator = new BussinessUnitValidator();
-            var ValidationResult = await validator.ValidateAsync(entity);
+            BussinessUnitValidator validator = new BussinessUnitValidator();
+            FluentValidation.Results.ValidationResult ValidationResult = await validator.ValidateAsync(entity);
 
             if (ValidationResult.IsValid)
             {
-                var result = await _storageService.InsertEntityAsync(entity);
+                string result = await _storageService.InsertEntityAsync(entity);
                 if (!String.IsNullOrEmpty(result))
                     return Ok($"BatchId: {result}");
             }
 
-            var errorMsg = ValidationResult.Errors.Select(x => new Error(x.ErrorCode, x.ErrorMessage)).ToList();
+            List<Error> errorMsg = ValidationResult.Errors.Select(x => new Error(x.ErrorCode, x.ErrorMessage)).ToList();
             return BadRequest(errorMsg);
         }
     }

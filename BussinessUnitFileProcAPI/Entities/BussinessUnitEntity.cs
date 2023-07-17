@@ -26,7 +26,7 @@ public class BussinessUnitEntity : TableEntity
 
         public override IDictionary<string, EntityProperty> WriteEntity(OperationContext operationContext)
         {
-            var results = base.WriteEntity(operationContext);
+            IDictionary<string, EntityProperty> results = base.WriteEntity(operationContext);
             EntityJsonPropertyConverter.Serialize(this, results);
             return results;
         }

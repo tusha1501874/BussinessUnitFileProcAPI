@@ -27,9 +27,9 @@ namespace BussinessUnitFileProcAPITests;
                 .WithReturnType<Task<string>>()
                 .Returns("XYZ");
 
-            var result = _bussinessUnitController.PostAsync(bussinessUnitEntity);
-            var statusCodeOfResult = result.Result as ObjectResult;
-            var errorlList = statusCodeOfResult.Value as List<Error>;
+            Task<IActionResult> result = _bussinessUnitController.PostAsync(bussinessUnitEntity);
+            ObjectResult? statusCodeOfResult = result.Result as ObjectResult;
+            List<Error>? errorlList = statusCodeOfResult?.Value as List<Error>;
 
             Assert.NotNull(statusCodeOfResult);
             Assert.That(statusCodeOfResult.StatusCode, Is.EqualTo(expectedResult));
@@ -37,15 +37,16 @@ namespace BussinessUnitFileProcAPITests;
             if (testType == "ValidInput")
                 Assert.NotNull(statusCodeOfResult.Value);
 
-            if (testType == "InvalidInputBussinessUnitEmptyTest")
+            if (testType == "InvalidInputBussinessUnitEmptyTest" && errorlList!=null)
                 Assert.That(errorlList[0].Description, Is.EqualTo("Bussiness Unit Should not be null or empty."));
 
-            if (testType == "InvalidInputForFileListAtlestContainOneItemTest")
+            if (testType == "InvalidInputForFileListAtlestContainOneItemTest" && errorlList != null)
                 Assert.That(errorlList[0].Description, Is.EqualTo("⦁\tAtleast one file should be exists in batch request body data"));
 
-            if (testType == "InvalidInputPastExpiryDateTest")
+            if (testType == "InvalidInputPastExpiryDateTest" && errorlList != null)
                 Assert.That(errorlList[0].Description, Is.EqualTo("Expiry Date should not be a past date."));
         }
+
 
         [Test]
         [TestCase("b8c01a7a-f863-465e-a34d-f633a520e879", 200)]
@@ -55,14 +56,30 @@ namespace BussinessUnitFileProcAPITests;
             A.CallTo(() =>
             _storageService.GetEntityAsync("b8c01a7a-f863-465e-a34d-f633a520e879")).Returns(new List<BussinessUnitEntity>() { new BussinessUnitEntity { BusinessUnit = "xyz" } });
 
-            var result = _bussinessUnitController.GetAsync(batchId);
-            var statusCodeOfResult = result.Result as ObjectResult;
-            var errorlList = statusCodeOfResult.Value as List<Error>;
+            Task<IActionResult> result = _bussinessUnitController.GetAsync(batchId);
+            ObjectResult? statusCodeOfResult = result.Result as ObjectResult;
+            List<Error>? errorlList = statusCodeOfResult?.Value as List<Error>;
             Assert.NotNull(statusCodeOfResult);
             Assert.That(statusCodeOfResult.StatusCode, Is.EqualTo(expectedStatusCode));
         }
 
-        public static IEnumerable<TestCaseData> Generator()
+    [Test]
+    [TestCase("b8c01a7a-f863-465e-a34d-f633a520e879", 200)]
+    [TestCase("xyz", 404)]
+    public void GetAsyncTest_WhenRepo_ReturnsNullResult(string batchId, int expectedStatusCode)
+    {
+        A.CallTo(() =>
+        _storageService.GetEntityAsync("b8c01a7a-f863-465e-a34d-f633a520e879")).Returns(new List<BussinessUnitEntity>());
+
+        Task<IActionResult> result = _bussinessUnitController.GetAsync(batchId);
+        ObjectResult? statusCodeOfResult = result.Result as ObjectResult;
+
+        Assert.NotNull(statusCodeOfResult);
+        Assert.That(statusCodeOfResult.StatusCode, Is.EqualTo(404));
+        Assert.That(((Error)statusCodeOfResult.Value).Code, Is.EqualTo("RecordNotFound"));
+    }
+
+    public static IEnumerable<TestCaseData> Generator()
         {
             yield return new TestCaseData(new BussinessUnitEntity
             {

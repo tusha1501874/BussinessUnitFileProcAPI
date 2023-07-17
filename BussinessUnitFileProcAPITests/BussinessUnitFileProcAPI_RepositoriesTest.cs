@@ -10,54 +10,80 @@ using System.Reflection;
 using File = BussinessUnitFileProcAPI.Models.File;
 
 namespace BussinessUnitFileProcAPITests;
-    public class BussinessUnitFileProcAPI_RepositoriesTest
+public class BussinessUnitFileProcAPI_RepositoriesTest
+{
+    private IConfiguration _configuration;
+    private ILogger<TableStorageRepo> _logger;
+    private TableStorageRepo _tableStorageRepo;
+    private CloudTableMock _cloudTable;
+
+    [SetUp]
+    public void Setup()
     {
-        private IConfiguration _configuration;
-        private ILogger<TableStorageRepo> _logger;
-        private TableStorageRepo _tableStorageRepo;
-        private CloudTableMock _cloudTable;
+        _logger = A.Fake<ILogger<TableStorageRepo>>();
+        _configuration = A.Fake<IConfiguration>();
+        _cloudTable = A.Fake<CloudTableMock>();
+        _tableStorageRepo = new TableStorageRepo(_configuration, _logger, _cloudTable);
+    }
 
-        [SetUp]
-        public void Setup()
-        {
-            _logger = A.Fake<ILogger<TableStorageRepo>>();
-            _configuration = A.Fake<IConfiguration>();
-            _cloudTable = A.Fake<CloudTableMock>();
-            _tableStorageRepo = new TableStorageRepo(_configuration, _logger, _cloudTable);
-        }
+    [TestCaseSource(nameof(TestCasesDataForGetAsyncTest))]
+    public void GetEntityAsyncTest(string batchId, List<BussinessUnitEntity> bussinessUnitEntitiesFromTableStorage)
+    {
+        ConstructorInfo? ctor = typeof(TableQuerySegment<BussinessUnitEntity>)
+            .GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)
+            .FirstOrDefault(c => c.GetParameters().Count() == 1);
+        TableQuerySegment<BussinessUnitEntity>? mockQuerySegment = ctor?.Invoke(new object[] { bussinessUnitEntitiesFromTableStorage }) as TableQuerySegment<BussinessUnitEntity>;
+        A.CallTo(() => _cloudTable.ExecuteQuerySegmentedAsync(A<TableQuery<BussinessUnitEntity>>.Ignored, null)).Returns(Task.FromResult(mockQuerySegment));
 
-        [TestCaseSource(nameof(TestCasesDataForGetAsyncTest))]
-        public void GetEntityAsyncTest(string batchId, List<BussinessUnitEntity> bussinessUnitEntitiesFromTableStorage)
-        {
-            var ctor = typeof(TableQuerySegment<BussinessUnitEntity>)
-                .GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)
-                .FirstOrDefault(c => c.GetParameters().Count() == 1);
-            var mockQuerySegment = ctor.Invoke(new object[] { bussinessUnitEntitiesFromTableStorage }) as TableQuerySegment<BussinessUnitEntity>;
-            MethodInfo setTokenMethod = typeof(TableQuerySegment<BussinessUnitEntity>).GetMethod("set_ContinuationToken", BindingFlags.NonPublic | BindingFlags.Instance);
-            var continuationToken = new TableContinuationToken();
-            setTokenMethod.Invoke(mockQuerySegment, new object[] { continuationToken });
-            A.CallTo(() => _cloudTable.ExecuteQuerySegmentedAsync(A<TableQuery<BussinessUnitEntity>>.Ignored, null)).Returns(Task.FromResult(mockQuerySegment));
+        Task<List<BussinessUnitEntity>?> result = _tableStorageRepo.GetEntityAsync(batchId);
 
-            var result = _tableStorageRepo.GetEntityAsync(batchId);
+        Assert.NotNull(result.Result);
+    }
 
-            Assert.NotNull(result.Result);
-        }
+    [Test]
+    public void GetEntityAsyncTest_WhenResult_ReturnsException()
+    {
+        object value = A.CallTo(() => _cloudTable.ExecuteQuerySegmentedAsync(A<TableQuery<BussinessUnitEntity>>.Ignored, null)).Throws(new Exception());
 
-        [TestCaseSource(nameof(TestCasesDataForInsertEntityAsync))]
-        public void InsertEntityAsyncTest(BussinessUnitEntity bussinessUnitEntity)
-        {
-            bussinessUnitEntity.BatchID = Guid.NewGuid().ToString();
-            var generatedTableResultFromAzure = new TableResult() { Result = bussinessUnitEntity, HttpStatusCode = 200 };
+        _tableStorageRepo?.GetEntityAsync("batchId");
 
-            A.CallTo(() => _cloudTable.ExecuteAsync(A<TableOperation>.Ignored)).Returns(generatedTableResultFromAzure);
+        A.CallTo(_logger).Where(call => call.Method.Name == nameof(ILogger<TableStorageRepo>.Log)
+        && call.GetArgument<LogLevel>(0) == LogLevel.Error
+                                       && CheckLogMessages(call.GetArgument<IReadOnlyList<KeyValuePair<string, object>>>(2)
+                                       , "Error occured inside TableStorageRepo in a Method GetEntityAsync"))
+                                       .MustHaveHappened(1, Times.Exactly);
+    }
 
-            var result = _tableStorageRepo.InsertEntityAsync(bussinessUnitEntity);
+    [TestCaseSource(nameof(TestCasesDataForInsertEntityAsync))]
+    public void InsertEntityAsyncTest(BussinessUnitEntity bussinessUnitEntity)
+    {
+        bussinessUnitEntity.BatchID = Guid.NewGuid().ToString();
+        TableResult generatedTableResultFromAzure = new TableResult() { Result = bussinessUnitEntity, HttpStatusCode = 200 };
 
-            Assert.NotNull(result.Result);
-        }
+        A.CallTo(() => _cloudTable.ExecuteAsync(A<TableOperation>.Ignored)).Returns(generatedTableResultFromAzure);
 
-        private static readonly object[] TestCasesDataForGetAsyncTest =
-        {
+        Task<string> result = _tableStorageRepo.InsertEntityAsync(bussinessUnitEntity);
+
+
+        Assert.NotNull(result.Result);
+    }
+
+    [TestCaseSource(nameof(TestCasesDataForInsertEntityAsync))]
+    public void InsertEntityAsyncTest_WhenResult_ReturnsException(BussinessUnitEntity bussinessUnitEntity)
+    {
+        A.CallTo(() => _cloudTable.ExecuteAsync(A<TableOperation>.Ignored)).Throws(new Exception()); ;
+
+        _tableStorageRepo?.InsertEntityAsync(bussinessUnitEntity);
+
+        A.CallTo(_logger).Where(call => call.Method.Name == nameof(ILogger<TableStorageRepo>.Log)
+        && call.GetArgument<LogLevel>(0) == LogLevel.Error
+                                       && CheckLogMessages(call.GetArgument<IReadOnlyList<KeyValuePair<string, object>>>(2)
+                                       , "Error occured inside TableStorageRepo in a Method InsertEntityAsync"))
+                                       .MustHaveHappened(1, Times.Exactly);
+    }
+
+    private static readonly object[] TestCasesDataForGetAsyncTest =
+    {
            new object[]{
             "b8c01a7a-f863-465e-a34d-f633a520e879",
            new List<BussinessUnitEntity>(){
@@ -114,8 +140,8 @@ namespace BussinessUnitFileProcAPITests;
              }
         } } };
 
-        private static readonly object[] TestCasesDataForInsertEntityAsync =
-        {
+    private static readonly object[] TestCasesDataForInsertEntityAsync =
+    {
            new object[]{
                new BussinessUnitEntity
             {
@@ -169,4 +195,18 @@ namespace BussinessUnitFileProcAPITests;
 
              }
         } };
+
+    private static bool CheckLogMessages(IReadOnlyList<KeyValuePair<string, object>>? readOnlyLists, string message)
+    {
+        if (readOnlyLists != null)
+            foreach (var kvp in readOnlyLists)
+            {
+                if (kvp.Value.ToString().Contains(message))
+                {
+                    return true;
+                }
+            }
+
+        return false;
     }
+}

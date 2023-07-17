@@ -16,39 +16,39 @@ public class TableStorageRepo : ITableStorageService
         _logger = logger;
         _cloudTable = cloudTable;
     }
-    public async Task<List<BussinessUnitEntity>> GetEntityAsync(string BatchId)
+    public async Task<List<BussinessUnitEntity>?> GetEntityAsync(string BatchId)
     {
         string condition = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, BatchId);
-        var query = new TableQuery<BussinessUnitEntity>().Where(condition);
-        var result = default(TableQuerySegment<BussinessUnitEntity>);
+        TableQuery<BussinessUnitEntity> query = new TableQuery<BussinessUnitEntity>().Where(condition);
+        TableQuerySegment<BussinessUnitEntity>? result = default;
         try
         {
             result = await _cloudTable.ExecuteQuerySegmentedAsync(query, null);
-            _logger.LogInformation("Successfully retrived Record from Azure Table storage" + TableName);
+            _logger.LogInformation($"Successfully retrived Record from Azure Table storage {TableName}");
 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error occured inside{nameof(TableStorageRepo)} in a Method {nameof(GetEntityAsync)}");
+            _logger.LogError(ex, $"Error occured inside {nameof(TableStorageRepo)} in a Method {nameof(GetEntityAsync)}");
         }
         
-        return result.Results;
+         return result?.Results;
     }
 
     public async Task<string> InsertEntityAsync(BussinessUnitEntity entity)
     {
         TableOperation insertOperation = TableOperation.Insert(entity);
-        var result = default(TableResult);
+        TableResult? result = default(TableResult);
         string generatedBatchId = string.Empty;
         try
         {
             result = await _cloudTable.ExecuteAsync(insertOperation);
             generatedBatchId = ((BussinessUnitEntity)result.Result).BatchID;
-            _logger.LogInformation("Successfully Inserted record in Azure Table storage" + TableName + " with BatchId:" + generatedBatchId);
+            _logger.LogInformation($"Successfully Inserted record in Azure Table storage {TableName} with BatchId: {generatedBatchId}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error occured inside{nameof(TableStorageRepo)} in a Method {nameof(InsertEntityAsync)}");
+            _logger.LogError(ex, $"Error occured inside {nameof(TableStorageRepo)} in a Method {nameof(InsertEntityAsync)}");
         }
 
         return generatedBatchId;

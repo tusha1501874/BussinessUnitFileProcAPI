@@ -1,5 +1,4 @@
-﻿namespace BussinessUnitFileProcAPI.Models
-{
+﻿namespace BussinessUnitFileProcAPI.Models;
     [Flags]
     public enum ValidBussinessUnit
     {
@@ -8,4 +7,3 @@
         BU3,
         TestBU
     }
-}

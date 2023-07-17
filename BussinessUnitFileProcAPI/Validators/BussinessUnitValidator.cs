@@ -32,7 +32,6 @@ namespace BussinessUnitFileProcAPI.Validators;
                 .ForEach(FileRule =>
                 {
                     FileRule.Where(v => v.Attributes.Count() > 0).NotNull().NotEmpty();
-
                 });
 
         }
