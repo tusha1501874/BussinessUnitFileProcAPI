@@ -1,7 +1,6 @@
 ﻿using Microsoft.WindowsAzure.Storage.Table;
 
-namespace BussinessUnitFileProcAPITests.Models
-{
+namespace BussinessUnitFileProcAPITests.Models;
     public class CloudTableMock : CloudTable
     {
         public CloudTableMock() : base(new Uri("https://tableassesment.table.core.windows.net/BussinessUnit"))
@@ -17,4 +16,3 @@ namespace BussinessUnitFileProcAPITests.Models
             });
         }
     }
-}

@@ -47,9 +47,10 @@ namespace BussinessUnitFileProcAPI.Controllers;
                 string result = await _storageService.InsertEntityAsync(entity);
                 if (!String.IsNullOrEmpty(result))
                     return Ok($"BatchId: {result}");
+                else return BadRequest(new Error("BatchNotCreated", "Batch not created please check logs"));
             }
 
             List<Error> errorMsg = ValidationResult.Errors.Select(x => new Error(x.ErrorCode, x.ErrorMessage)).ToList();
-            return BadRequest(errorMsg);
+            return new BadRequestObjectResult(errorMsg);
         }
     }
