@@ -59,11 +59,9 @@ public class BussinessUnitFileProcAPI_RepositoriesTest
     {
         bussinessUnitEntity.BatchID = Guid.NewGuid().ToString();
         TableResult generatedTableResultFromAzure = new TableResult() { Result = bussinessUnitEntity, HttpStatusCode = 200 };
-
         A.CallTo(() => _cloudTable.ExecuteAsync(A<TableOperation>.Ignored)).Returns(generatedTableResultFromAzure);
 
         Task<string> result = _tableStorageRepo.InsertEntityAsync(bussinessUnitEntity);
-
 
         Assert.NotNull(result.Result);
     }
