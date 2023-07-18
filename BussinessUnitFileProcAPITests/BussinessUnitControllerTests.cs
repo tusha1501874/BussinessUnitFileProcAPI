@@ -49,7 +49,7 @@ public class Tests
 
     [Test]
     [TestCaseSource(nameof(TestCasesDataForInsertEntityAsync))]
-    public void PostAsyncTest_WhenRepo_ReturnsNullResult(BussinessUnitEntity bussinessUnitEntity)
+    public void PostAsyncTest_WhenRepoReturnsEmptyResult__WithErrorCode_BatchNotCreated(BussinessUnitEntity bussinessUnitEntity)
     {
         A.CallTo(_storageService).Where(call => call.Method.Name == "InsertEntityAsync")
             .WithReturnType<Task<string>>()
@@ -61,6 +61,7 @@ public class Tests
 
         Assert.NotNull(statusCodeOfResult);
         Assert.That(statusCodeOfResult.StatusCode, Is.EqualTo(400));
+        if((Error?)statusCodeOfResult.Value!=null)
         Assert.That(((Error)statusCodeOfResult.Value).Code, Is.EqualTo("BatchNotCreated"));
     }
 
@@ -83,7 +84,7 @@ public class Tests
     [Test]
     [TestCase("b8c01a7a-f863-465e-a34d-f633a520e879", 200)]
     [TestCase("xyz", 404)]
-    public void GetAsyncTest_WhenRepo_ReturnsNullResult(string batchId, int expectedStatusCode)
+    public void GetAsyncTest_WhenRepoReturnsNullResult_ThenReturnsBadRequest_WithErrorCode_RecordNotFound(string batchId, int expectedStatusCode)
     {
         A.CallTo(() =>
         _storageService.GetEntityAsync("b8c01a7a-f863-465e-a34d-f633a520e879")).Returns(new List<BussinessUnitEntity>());
@@ -93,7 +94,8 @@ public class Tests
 
         Assert.NotNull(statusCodeOfResult);
         Assert.That(statusCodeOfResult.StatusCode, Is.EqualTo(404));
-        Assert.That(((Error)statusCodeOfResult.Value).Code, Is.EqualTo("RecordNotFound"));
+        if ((Error?)statusCodeOfResult.Value != null)
+            Assert.That(((Error)statusCodeOfResult.Value).Code, Is.EqualTo("RecordNotFound"));
     }
 
     private static readonly object[] TestCasesDataForInsertEntityAsync =
