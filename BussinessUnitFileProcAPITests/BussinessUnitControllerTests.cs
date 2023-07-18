@@ -49,7 +49,7 @@ public class Tests
 
     [Test]
     [TestCaseSource(nameof(TestCasesDataForInsertEntityAsync))]
-    public void PostAsyncTest_WhenRepoReturnsEmptyResult__WithErrorCode_BatchNotCreated(BussinessUnitEntity bussinessUnitEntity)
+    public void PostAsyncTest_WhenRepoReturnsEmptyResult_ThenReturnsBadRequest_WithErrorCode_BatchNotCreated(BussinessUnitEntity bussinessUnitEntity)
     {
         A.CallTo(_storageService).Where(call => call.Method.Name == "InsertEntityAsync")
             .WithReturnType<Task<string>>()

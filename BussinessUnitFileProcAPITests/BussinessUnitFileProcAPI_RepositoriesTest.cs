@@ -41,7 +41,7 @@ public class BussinessUnitFileProcAPI_RepositoriesTest
     }
 
     [Test]
-    public void GetEntityAsyncTest__WhenExecuteQuerySegmentedAsynccThrowsException_ThenLogExceptionWithProperErrorMessage()
+    public void GetEntityAsyncTest__WhenExecuteQuerySegmentedAsyncThrowsException_ThenLogException_WithProperErrorMessage()
     {
         object value = A.CallTo(() => _cloudTable.ExecuteQuerySegmentedAsync(A<TableQuery<BussinessUnitEntity>>.Ignored, null)).Throws(new Exception());
 
@@ -67,7 +67,7 @@ public class BussinessUnitFileProcAPI_RepositoriesTest
     }
 
     [TestCaseSource(nameof(TestCasesDataForInsertEntityAsync))]
-    public void InsertEntityAsyncTest_WhenExcecuteAsyncThrowsException_ThenLogExceptionWithProperErrorMessage(BussinessUnitEntity bussinessUnitEntity)
+    public void InsertEntityAsyncTest_WhenExcecuteAsyncThrowsException_ThenLogException_WithProperErrorMessage(BussinessUnitEntity bussinessUnitEntity)
     {
         A.CallTo(() => _cloudTable.ExecuteAsync(A<TableOperation>.Ignored)).Throws(new Exception()); ;
 
